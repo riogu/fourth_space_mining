@@ -103,40 +103,33 @@ void CirclePhysicsUpdate::solve_collision_aux(Body& body, Body& other_body,
     // final velocity
     body.velocity +=
         Vector2Scale(unit_vector_n, 2 * other_body.mass * relative_change_dot);
-
     // other body
     other_body.velocity -=
         Vector2Scale(unit_vector_n, 2 * body.mass * relative_change_dot);
 
     // ############################################################################
     // solve overlapping
-
     float radius_sum = shape.radius + other_shape.radius;
-    // what i had
-    // float overlap = distance - radius_sum;
-    //
     float overlap = radius_sum - distance;
     // divide the overlap by 2 so each particle
     // gets pushed the same amount in opposite directions
     overlap /= radius_sum;
-    float correction = 1.0f; // NOTE: this value is here to stabilize the simulation
-
-    // points towards the other body
+    float correction = 1.1f; // NOTE: this value is here to stabilize the simulation
     Vector2 push = Vector2Normalize(impact);
+    // points towards the other body
     push = Vector2Scale(push, overlap);
+
+    other_body.position += Vector2Scale(push, other_shape.radius * correction);
+    body.position -= Vector2Scale(push, shape.radius * correction);
+    // // ############################################################################
+}
+// NOTE: use this if you want to only move smaller bodies after collision
+//      and comment "overlap /= radius_sum"
+
     // push = Vector2AddValue(push, correction);
     // other_shape.radius >= shape.radius ? body.position -= push
     //                                    : other_body.position += push;
-
-    other_body.position += Vector2Scale(push, other_shape.radius);
-    body.position -= Vector2Scale(push, shape.radius);
-
-    other_body.position = Vector2AddValue(other_body.position, correction);
-    body.position = Vector2AddValue(body.position, correction);
-    // other_body.position += Vector2AddValue(push, correction);
-    // body.position -= Vector2AddValue(push, correction);
-    // // ############################################################################
-}
+// ----------------------------------------------------------------------------------
 
 void CirclePhysicsUpdate::solve_collision(EntityId entity_id, EntityId other_entity_id) {
     // find new velocity vectors
